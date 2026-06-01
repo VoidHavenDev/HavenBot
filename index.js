@@ -27,20 +27,21 @@ client.once('ready', () => {
   console.log(`🔥 Bot online como ${client.user.tag}`);
 });
 
-// 📌 painel
+// 📌 painel bonito
 client.on('messageCreate', async (message) => {
   if (message.content === '!painel') {
 
     const embed = new EmbedBuilder()
-      .setTitle('📮 Correio Elegante')
-      .setDescription('Envie uma carta anônima ou identificada para alguém do servidor.')
       .setColor('#5865F2')
-      .setFooter({ text: 'Clique no botão abaixo para começar' });
+      .setTitle('📮 Correio Elegante')
+      .setDescription('Envie uma carta anônima ou assinada para alguém do servidor.\n\nClique no botão abaixo 💜')
+      .setImage('https://i.imgur.com/8Km9tLL.png') // 👉 pode trocar depois
+      .setFooter({ text: 'Sistema de Correio • Seja respeitoso' });
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('abrir_painel')
-        .setLabel('Enviar Carta')
+        .setLabel('💌 Enviar Carta')
         .setStyle(ButtonStyle.Primary)
     );
 
@@ -57,40 +58,40 @@ client.on(Events.InteractionCreate, async interaction => {
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('anonimo')
-        .setLabel('Anônimo')
+        .setLabel('👻 Anônimo')
         .setStyle(ButtonStyle.Secondary),
 
       new ButtonBuilder()
         .setCustomId('assinado')
-        .setLabel('Assinado')
+        .setLabel('✍️ Assinado')
         .setStyle(ButtonStyle.Success)
     );
 
     return interaction.reply({
-      content: 'Como deseja enviar?',
+      content: '📨 Como deseja enviar sua carta?',
       components: [row],
       ephemeral: true
     });
   }
 
-  // escolher tipo → abrir seletor de usuário
+  // escolher tipo
   if (interaction.isButton() && (interaction.customId === 'anonimo' || interaction.customId === 'assinado')) {
 
     const tipo = interaction.customId;
 
     const select = new UserSelectMenuBuilder()
       .setCustomId(`select_${tipo}`)
-      .setPlaceholder('🔍 Selecione o destinatário');
+      .setPlaceholder('🔍 Buscar destinatário...');
 
     const row = new ActionRowBuilder().addComponents(select);
 
     return interaction.update({
-      content: 'Escolha quem vai receber:',
+      content: '👤 Escolha quem vai receber:',
       components: [row]
     });
   }
 
-  // selecionar usuário → abrir modal
+  // selecionar usuário
   if (interaction.isUserSelectMenu()) {
 
     const tipo = interaction.customId.split('_')[1];
@@ -98,11 +99,11 @@ client.on(Events.InteractionCreate, async interaction => {
 
     const modal = new ModalBuilder()
       .setCustomId(`modal_${tipo}_${userId}`)
-      .setTitle('Escreva sua carta');
+      .setTitle('💌 Escreva sua carta');
 
     const input = new TextInputBuilder()
       .setCustomId('mensagem')
-      .setLabel('Sua mensagem')
+      .setLabel('Digite sua mensagem')
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
@@ -124,27 +125,49 @@ client.on(Events.InteractionCreate, async interaction => {
 
     const user = await client.users.fetch(userId);
 
+    // 💎 EMBED ABSURDA
     const embed = new EmbedBuilder()
-      .setDescription(msg)
-      .setColor(tipo === 'anonimo' ? '#2b2d31' : '#57F287')
+      .setColor(tipo === 'anonimo' ? '#111214' : '#5865F2')
+
+      .setAuthor({
+        name: tipo === 'anonimo' ? '👻 Remetente Anônimo' : interaction.user.username,
+        iconURL: interaction.user.displayAvatarURL()
+      })
+
+      .setTitle('💌 Nova Carta Recebida')
+
+      .setDescription(`━━━━━━━━━━━━━━━\n💬 ${msg}\n━━━━━━━━━━━━━━━`)
+
+      .addFields(
+        {
+          name: '📬 Destinatário',
+          value: `<@${user.id}>`,
+          inline: true
+        },
+        {
+          name: '📨 Tipo',
+          value: tipo === 'anonimo' ? 'Anônima 👻' : 'Assinada ✍️',
+          inline: true
+        }
+      )
+
+      .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+
+      .setImage('https://i.imgur.com/Z6XbK9K.png') // 👉 banner bonito
+
+      .setFooter({
+        text: 'Correio Elegante • Entregue com sucesso 💜'
+      })
+
       .setTimestamp();
 
-    if (tipo === 'anonimo') {
-      embed.setAuthor({ name: '📨 Mensagem Anônima' });
-    } else {
-      embed.setAuthor({
-        name: interaction.user.username,
-        iconURL: interaction.user.displayAvatarURL()
-      });
-    }
-
-    // envia no canal
+    // envia carta
     canal.send({
-      content: `📬 Carta para <@${user.id}>`,
+      content: `📬 <@${user.id}> você recebeu uma carta!`,
       embeds: [embed]
     });
 
-    // LOG ADMIN
+    // 📜 LOG
     if (log) {
       const logEmbed = new EmbedBuilder()
         .setTitle('📜 Nova carta enviada')
