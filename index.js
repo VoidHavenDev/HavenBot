@@ -10,17 +10,32 @@ const {
   Events
 } = require('discord.js');
 
+// 🔥 FIX: intents corrigidos (isso é o que faltava)
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
-// 🔧 CONFIGURAÇÕES (MUDA AQUI)
-const CANAL_ENVIO = '1510807765319155902'; // canal onde envia
-const CANAL_LOG = '1510823224022401175'; // canal de log
+// 🔧 CONFIGURAÇÕES
+const CANAL_ENVIO = '1510807765319155902';
+const CANAL_LOG = '1510823224022401175';
 
 client.once('ready', () => {
   console.log(`✅ Bot online como ${client.user.tag}`);
 });
+
+// 🟢 FIX: comando !painel adicionado
+client.on("messageCreate", (message) => {
+  if (message.author.bot) return;
+
+  if (message.content === "!painel") {
+    message.reply("📋 **Painel aberto!**");
+  }
+});
+
 
 // 📌 COMANDO /carta
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -67,7 +82,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
         .setCustomId('destinatario')
         .setLabel('ID do destinatário')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('Cole o ID do usuário')
         .setRequired(true);
 
       const msgInput = new TextInputBuilder()
@@ -104,7 +118,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       });
     }
 
-    // 💎 EMBED BONITA
     const embed = new EmbedBuilder()
       .setColor('#ED4245')
       .setTitle('💌 𝑪𝑨𝑹𝑻𝑨 𝑹𝑬𝑪𝑬𝑩𝑰𝑫𝑨')
@@ -138,11 +151,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
       })
       .setTimestamp();
 
-    // 📩 ENVIO
     const canal = await client.channels.fetch(CANAL_ENVIO);
     await canal.send({ embeds: [embed] });
 
-    // 📜 LOG
     const log = new EmbedBuilder()
       .setColor('#2B2D31')
       .setTitle('📜 Log de Carta')
